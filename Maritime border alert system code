@@ -1,0 +1,340 @@
+#include <TinyGPS++.h>
+#include <SoftwareSerial.h>
+#include <LiquidCrystal_I2C.h>
+
+LiquidCrystal_I2C lcd(0x27,20,4);
+
+String st="";
+static const int RXPin = 2, TXPin = 3;
+static const uint32_t GPSBaud = 9600;
+TinyGPSPlus gps;
+SoftwareSerial ss(RXPin, TXPin);
+float lat1,lng1;
+int gps_flag=1;
+SoftwareSerial mySerial( 9,10);
+#define trigPin 6
+#define rain 7
+ int flag=1;
+ int flag1=1;
+ int bpm;
+ String msg;
+void setup()
+{
+  lcd.init();                      // initialize the lcd
+  // Print a message to the LCD.
+ lcd.backlight();
+  ss.begin(GPSBaud);  
+  mySerial.begin(9600);   // Setting the baud rate of GSM Module  
+ 
+  Serial.begin(9600);
+     
+  pinMode(trigPin,OUTPUT);
+  digitalWrite(A1,LOW);
+
+ 
+  ///////
+ 
+  while(gps_flag==1)
+   {
+    ss.begin(GPSBaud);  
+    while(ss.available() > 0)
+  {
+    //delay(500);
+    gps.encode(ss.read());
+    if (gps.location.isUpdated())
+    {
+     lat1 =(gps.location.lat());
+     lng1 =(gps.location.lng());
+      Serial.println("Lat="+String(lat1,6));
+      Serial.println("Lng="+String(lng1,6));
+
+     gps_flag=0;
+     ss.end();
+    }
+  }
+  }
+  //////
+ 
+  pinMode (9,OUTPUT);
+  pinMode (12,OUTPUT);
+  pinMode (5,OUTPUT);
+  pinMode (4,OUTPUT);
+  pinMode (11,OUTPUT);
+   pinMode (A1,OUTPUT);
+  digitalWrite(9,LOW);
+   digitalWrite(12,HIGH);
+    digitalWrite(5,LOW);
+     digitalWrite(4,HIGH);
+     
+  analogWrite(11,255);
+    lcd.setCursor(5,0);
+  lcd.print("ZONE NORMAL");
+  delay(100);
+}
+
+
+void loop()
+{      
+ 
+  int a,b,c;
+ 
+  a=digitalRead(trigPin);
+  b=digitalRead(rain);
+  c=analogRead(A0);  
+       Serial.println(a);
+       Serial.println(b);
+       Serial.println(c);
+       
+if(c>650)
+{
+     int  bpm = map(c,0,1024,0,170);
+     Serial.println(bpm);  
+     lcd.setCursor(3,1);    
+  lcd.print("bpm=");
+  lcd.print(bpm);
+   
+}
+if (c>720)
+  {
+   
+    SendMessage3();
+    delay(2000);
+    SendMessage4();
+    delay(2000);
+    SendMessage5();
+    delay(2000);
+    digitalWrite(12,HIGH);
+ 
+    flag=0;
+   
+    }
+else
+{
+int  bpm=0;
+  Serial.println(bpm);
+  lcd.setCursor(3,1);
+  lcd.print("         ");
+ 
+
+  }
+ 
+ 
+if (lat1<=10.826050)
+  {
+    //gps_flag=1;
+   
+    //if(flag == 1)
+  delay(500);
+    digitalWrite(12,LOW);
+Serial.println("Lat="+String(lat1,6));
+Serial.println("Lng="+String(lng1,6));
+    delay(500);
+    Serial.println("zone 2");
+
+   
+   
+    analogWrite(11,155);
+    digitalWrite(5,HIGH);
+     digitalWrite(4,LOW);
+     
+
+     
+
+     
+ 
+    lcd.setCursor(5,0);    
+  lcd.print("DANGER ZONE");
+    SendMessage();
+    delay(2000);
+    SendMessage1();
+    delay(2000);
+    SendMessage2();
+    delay(2000);
+    digitalWrite(12,HIGH);
+ 
+    flag=0;
+    }
+else
+if (lat1<=10.824800)
+  {
+    //gps_flag=1;
+   
+    //if(flag == 1)
+  delay(500);
+    digitalWrite(12,LOW);
+Serial.println("Lat="+String(lat1,6));
+Serial.println("Lng="+String(lng1,6));
+    delay(500);
+    Serial.println("zone 1");
+    analogWrite(11,85);
+    digitalWrite(5,LOW);
+     digitalWrite(4,HIGH);
+  digitalWrite(13,HIGH);
+    lcd.setCursor(5,0);    
+  lcd.print("DANGER ZONE");
+  String msg="please help me i am in danger | Lat:" + String(lat1,6) + " | Lng:" + String (lng1,6);
+    SendMessage();
+    delay(2000);
+    SendMessage1();
+    delay(2000);
+    SendMessage2();
+    delay(2000);
+    digitalWrite(12,HIGH);
+ 
+    flag=0;
+    }
+   if (a==1 ||b==0)
+   {
+      delay(500);
+    digitalWrite(12,LOW);
+Serial.println("Lat="+String(lat1,6));
+Serial.println("Lng="+String(lng1,6));
+    delay(500);
+   
+     
+    lcd.setCursor(5,0);    
+  lcd.print("DANGER ZONE");
+ 
+    SendMessage();
+    delay(2000);
+    SendMessage1();
+    delay(2000);
+    SendMessage2();
+    delay(2000);
+    digitalWrite(12,HIGH);
+    lcd.setCursor(3,1);    
+  lcd.print("                 ");
+    flag=0;
+    }
+ 
+        gps1();
+      //
+     delay(500);
+     
+}
+
+
+void gps1()
+{
+  Serial.println("work");
+    ss.begin(GPSBaud);  
+    while(ss.available() > 0)
+  {
+    //delay(500);
+    gps.encode(ss.read());
+    if (gps.location.isUpdated())
+    {Serial.println("work1");
+     lat1 =(gps.location.lat());
+     lng1 =(gps.location.lng());
+      Serial.println("Lat="+String(lat1,6));
+      Serial.println("Lng="+String(lng1,6));
+
+     gps_flag=0;
+     delay(1000);
+     ss.end();
+    }
+  }
+  }
+void SendMessage()
+{
+  String msg="please help me i am in danger | Lat:" + String(lat1,6) + " | Lng:" + String (lng1,6);
+  Serial.println(msg);
+  delay(1000);
+  mySerial.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
+  delay(1000);  // Delay of 1000 milli seconds or 1 second
+  mySerial.println("AT+CMGS=\"+919865185300\"\r"); // Replace x with mobile number
+  delay(1000);
+  mySerial.println("http://maps.google.com/maps?q=loc:");// The SMS text you want to send
+  delay(1000);
+  mySerial.println(msg);// The SMS text you want to send
+  delay(1000);  
+  mySerial.println((char)26);// ASCII code of CTRL+Z
+  delay(4000);
+}
+
+void SendMessage1()
+{
+  String msg="please help me i am in danger | Lat:" + String(lat1,6) + " | Lng:" + String (lng1,6);
+  Serial.println(msg);
+  delay(1000);
+  mySerial.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
+  delay(1000);  // Delay of 1000 milli seconds or 1 second
+  mySerial.println("AT+CMGS=\"+918220854959\"\r"); // Replace x with mobile number
+  delay(1000);
+  mySerial.println("http://maps.google.com/maps?q=loc:");// The SMS text you want to send
+  delay(1000);
+  mySerial.println(msg);// The SMS text you want to send
+  delay(1000);  
+  mySerial.println((char)26);// ASCII code of CTRL+Z
+  delay(4000);
+}void SendMessage2()
+{
+  String msg="please help me i am in danger | Lat:" + String(lat1,6) + " | Lng:" + String (lng1,6);
+  Serial.println(msg);
+  delay(1000);
+  mySerial.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
+  delay(1000);  // Delay of 1000 milli seconds or 1 second
+  mySerial.println("AT+CMGS=\"+918610516208\"\r"); // Replace x with mobile number
+  delay(1000);
+  mySerial.println("http://maps.google.com/maps?q=loc:");// The SMS text you want to send
+  delay(1000);
+  mySerial.println(msg);// The SMS text you want to send
+  delay(1000);  
+  mySerial.println((char)26);// ASCII code of CTRL+Z
+  delay(4000);
+  msg="  ";
+}
+
+void SendMessage3()
+{
+  String msg="madical emergency | Lat:" + String(lat1,6) + " | Lng:" + String (lng1,6);
+  Serial.println(msg);
+  delay(1000);
+  mySerial.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
+  delay(1000);  // Delay of 1000 milli seconds or 1 second
+  mySerial.println("AT+CMGS=\"+919865185300\"\r"); // Replace x with mobile number
+  delay(1000);
+  mySerial.println("http://maps.google.com/maps?q=loc:");// The SMS text you want to send
+  delay(1000);
+  mySerial.println(msg);// The SMS text you want to send
+  delay(1000);  
+  mySerial.println((char)26);// ASCII code of CTRL+Z
+  delay(4000);
+ 
+}
+
+void SendMessage4()
+{
+  String msg="madical emergency | Lat:" + String(lat1,6) + " | Lng:" + String (lng1,6);
+  Serial.println(msg);
+  delay(1000);
+  mySerial.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
+  delay(1000);  // Delay of 1000 milli seconds or 1 second
+  mySerial.println("AT+CMGS=\"+918220854959\"\r"); // Replace x with mobile number
+  delay(1000);
+  mySerial.println("http://maps.google.com/maps?q=loc:");// The SMS text you want to send
+  delay(1000);
+  mySerial.println(msg);// The SMS text you want to send
+  delay(1000);  
+  mySerial.println((char)26);// ASCII code of CTRL+Z
+  delay(4000);
+ 
+}
+
+void SendMessage5()
+{
+  String msg="madical emergency | Lat:" + String(lat1,6) + " | Lng:" + String (lng1,6);
+  Serial.println(msg);
+  delay(1000);
+  mySerial.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
+  delay(1000);  // Delay of 1000 milli seconds or 1 second
+  mySerial.println("AT+CMGS=\"+918610516208\"\r"); // Replace x with mobile number
+  delay(1000);
+  mySerial.println("http://maps.google.com/maps?q=loc:");// The SMS text you want to send
+  delay(1000);
+  mySerial.println(msg);// The SMS text you want to send
+  delay(1000);  
+  mySerial.println((char)26);// ASCII code of CTRL+Z
+  delay(4000);
+ 
+}
